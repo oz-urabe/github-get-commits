@@ -5,9 +5,11 @@
 require __DIR__.'/../vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
+use OzVision\Command\GithubCommitAggregateCommand;
 
 $application = new Application();
 
 // ... register commands
+$application->add(new GithubCommitAggregateCommand());
 
 $application->run();
