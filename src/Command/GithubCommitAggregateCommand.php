@@ -3,6 +3,7 @@
 namespace OzVision\Command;
 
 use Cache\Adapter\Redis\RedisCachePool;
+use OzVision\Util\BetweenDateTime;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -14,8 +15,7 @@ class GithubCommitAggregateCommand extends Command
 
     protected $client;
 
-    protected $start;
-    protected $end;
+    protected $betweenDateTime;
 
     protected function configure()
     {
@@ -63,8 +63,8 @@ class GithubCommitAggregateCommand extends Command
         foreach ($repositories as $repository) {
             $commits = $this->client->api('repo')->commits()->all($this->configs['target_user'], $repository, array(
                 'sha' => 'master',
-                'since' => $this->start->format('c'),
-                'until' => $this->end->format('c'),
+                'since' => $this->betweenDateTime->getStart()->format('c'),
+                'until' => $this->betweenDateTime->getEnd()->format('c')
             ));
             foreach ($commits as $commit) {
                 $name = $this->getCommiterName($commit);
@@ -100,7 +100,11 @@ class GithubCommitAggregateCommand extends Command
 
     protected function notify($teams)
     {
-        $message = sprintf('@here *%s ~ %s: チームごとのコミット数* のレポート'.PHP_EOL.PHP_EOL, $this->start->format('Y年m月d日'), $this->end->format('Y年m月d日'));
+        $message = sprintf(
+            '@here *%s ~ %s: チームごとのコミット数* のレポート'.PHP_EOL.PHP_EOL,
+            $this->betweenDateTime->getStart()->format('Y年m月d日'),
+            $this->betweenDateTime->getEnd()->format('Y年m月d日')
+        );
         $configs = $this->configs['slack'];
         $settings = [
             'username' => $configs['username'],
@@ -130,7 +134,6 @@ class GithubCommitAggregateCommand extends Command
         $this->client->addCache(new RedisCachePool($redis));
         $this->client->authenticate($this->configs['github_key'], null, \Github\Client::AUTH_HTTP_TOKEN);
 
-        $this->start = new \DateTime(date('Y-m-d 00:00:00', strtotime('- 1 day - 1 month')));
-        $this->end = new \DateTime(date('Y-m-d 23:59:59', strtotime('- 1 day')));
+        $this->betweenDateTime = new BetweenDateTime();
     }
 }
