@@ -10,6 +10,10 @@ use Symfony\Component\Yaml\Yaml;
 
 class GithubCommitAggregateCommand extends Command
 {
+    private $configs = [];
+
+    protected $client;
+
     protected function configure()
     {
         date_default_timezone_set('Asia/Tokyo');
@@ -21,41 +25,64 @@ class GithubCommitAggregateCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $redis = new \Redis();
-        $redis->connect('127.0.0.1', 6379);
+        $this->prepare();
 
-        $configs = Yaml::parseFile(realpath(__DIR__.'/../../config.yml'));
+        $repositories = $this->getRepositories();
 
-        // Create a PSR6 cache pool
+        $count = $this->getCommits($repositories);
 
-        $client = new \Github\Client();
-        $client->addCache(new RedisCachePool($redis));
-        $client->authenticate($configs['github_key'], null, \Github\Client::AUTH_HTTP_TOKEN);
+        var_dump($count);
+    }
 
+    protected function getRepositories()
+    {
         $page = 1;
-        $start = new \DateTime(date('Y-m-d 00:00:00', strtotime(sprintf('- %d day', date('N') + 6))));
-        $end = new \DateTime(date('Y-m-d 23:59:59', strtotime(sprintf('- %d day', date('N')))));
-        $count = [];
         while (true) {
-            $repositories = $client->api('organization')->repositories($configs['target_user'], 'all', $page);
+            $repositories = $this->client
+                ->api('organization')
+                ->repositories($this->configs['target_user'], 'all', $page);
+
             if (!count($repositories)) {
                 break;
             }
 
-            foreach ($repositories as $repo) {
-                $commits = $client->api('repo')->commits()->all($configs['target_user'], $repo['name'], array(
-                    'sha' => 'master',
-                    'since' => $start->format('c'),
-                    'until' => $end->format('c'),
-                ));
-                foreach ($commits as $commit) {
-                    $author = $commit['author']['login'];
-                    $count[$author] = isset($count[$author]) ? $count[$author]+1 : 1;
-                }
+            foreach ($repositories as $repository) {
+                yield $repository['name'];
             }
             $page++;
         }
+    }
 
-        var_dump($count);
+    protected function getCommits($repositories)
+    {
+        $start = new \DateTime(date('Y-m-d 00:00:00', strtotime('- 1 day - 1 month')));
+        $end = new \DateTime(date('Y-m-d 23:59:59', strtotime('- 1 day')));
+        $count = [];
+
+        foreach ($repositories as $repository) {
+            $commits = $this->client->api('repo')->commits()->all($this->configs['target_user'], $repository, array(
+                'sha' => 'master',
+                'since' => $start->format('c'),
+                'until' => $end->format('c'),
+            ));
+            foreach ($commits as $commit) {
+                $author = $commit['author']['login'];
+                $count[$author] = isset($count[$author]) ? $count[$author]+1 : 1;
+            }
+        }
+
+        return $count;
+    }
+
+    private function prepare()
+    {
+        $this->configs = Yaml::parseFile(realpath(__DIR__.'/../../config.yml'));
+
+        $redis = new \Redis();
+        $redis->connect('127.0.0.1', 6379);
+
+        $this->client = new \Github\Client();
+        $this->client->addCache(new RedisCachePool($redis));
+        $this->client->authenticate($this->configs['github_key'], null, \Github\Client::AUTH_HTTP_TOKEN);
     }
 }
