@@ -14,6 +14,9 @@ class GithubCommitAggregateCommand extends Command
 
     protected $client;
 
+    protected $start;
+    protected $end;
+
     protected function configure()
     {
         date_default_timezone_set('Asia/Tokyo');
@@ -29,9 +32,9 @@ class GithubCommitAggregateCommand extends Command
 
         $repositories = $this->getRepositories();
 
-        $count = $this->getCommits($repositories);
+        $teams = $this->getCommits($repositories);
 
-        var_dump($count);
+        $this->notify($teams);
     }
 
     protected function getRepositories()
@@ -55,15 +58,13 @@ class GithubCommitAggregateCommand extends Command
 
     protected function getCommits($repositories)
     {
-        $start = new \DateTime(date('Y-m-d 00:00:00', strtotime('- 1 day - 1 month')));
-        $end = new \DateTime(date('Y-m-d 23:59:59', strtotime('- 1 day')));
         $users = [];
 
         foreach ($repositories as $repository) {
             $commits = $this->client->api('repo')->commits()->all($this->configs['target_user'], $repository, array(
                 'sha' => 'master',
-                'since' => $start->format('c'),
-                'until' => $end->format('c'),
+                'since' => $this->start->format('c'),
+                'until' => $this->end->format('c'),
             ));
             foreach ($commits as $commit) {
                 $author = $commit['author']['login'];
@@ -90,6 +91,27 @@ class GithubCommitAggregateCommand extends Command
         return $teams;
     }
 
+    protected function notify($teams)
+    {
+        $message = sprintf('@here *%s ~ %s: チームごとのコミット数* のレポート'.PHP_EOL.PHP_EOL, $this->start->format('Y年m月d日'), $this->end->format('Y年m月d日'));
+        $configs = $this->configs['slack'];
+        $settings = [
+            'username' => $configs['username'],
+            'channel' => $configs['channel'],
+            'link_names' => (bool) $configs['link_names'],
+            'mrkdwn_in' => ['pretext', 'text', 'title', 'fields', 'fallback'],
+        ];
+        $client = new \Maknz\Slack\Client($configs['webhook_url'], $settings);
+        $base = '_%s_: `%d commits`'.PHP_EOL;
+        foreach ($teams as $team => $commitCount) {
+            $message .= sprintf($base, $team, $commitCount);
+        }
+
+        $message .= PHP_EOL.'<https://github.com/oz-urabe/github-get-commits|PR歓迎>';
+
+        $client->enableMarkdown()->send($message);
+    }
+
     private function prepare()
     {
         $this->configs = Yaml::parseFile(realpath(__DIR__.'/../../config.yml'));
@@ -100,5 +122,8 @@ class GithubCommitAggregateCommand extends Command
         $this->client = new \Github\Client();
         $this->client->addCache(new RedisCachePool($redis));
         $this->client->authenticate($this->configs['github_key'], null, \Github\Client::AUTH_HTTP_TOKEN);
+
+        $this->start = new \DateTime(date('Y-m-d 00:00:00', strtotime('- 1 day - 1 month')));
+        $this->end = new \DateTime(date('Y-m-d 23:59:59', strtotime('- 1 day')));
     }
 }
