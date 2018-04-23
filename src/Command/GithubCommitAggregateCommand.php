@@ -77,7 +77,7 @@ class GithubCommitAggregateCommand extends Command
             $teams[$teamName] = 0;
             foreach ($users as $userName => $commitCount) {
                 if (in_array($userName, $members, true)) {
-                    $teams[$teamName] = $commitCount;
+                    $teams[$teamName] += $commitCount;
                     unset($users[$userName]);
                 }
             }
@@ -85,7 +85,7 @@ class GithubCommitAggregateCommand extends Command
 
         $teams['other'] = 0;
         foreach ($users as $commitCount) {
-            $teams['other'] = $commitCount;
+            $teams['other'] += $commitCount;
         }
 
         return $teams;
