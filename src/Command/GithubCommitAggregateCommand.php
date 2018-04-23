@@ -67,8 +67,8 @@ class GithubCommitAggregateCommand extends Command
                 'until' => $this->end->format('c'),
             ));
             foreach ($commits as $commit) {
-                $author = $commit['author']['login'];
-                $users[$author] = isset($users[$author]) ? $users[$author]+1 : 1;
+                $name = $this->getCommiterName($commit);
+                $users[$name] = isset($users[$name]) ? $users[$name] + 1 : 1;
             }
         }
 
@@ -89,6 +89,13 @@ class GithubCommitAggregateCommand extends Command
         }
 
         return $teams;
+    }
+
+    protected function getCommiterName($commit)
+    {
+        $author = isset($commit['author']) ? $commit['author'] : $commit['commit']['author'];
+
+        return isset($author['login']) ? $author['login'] : $author['name'];
     }
 
     protected function notify($teams)
