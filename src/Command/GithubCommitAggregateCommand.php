@@ -43,7 +43,7 @@ class GithubCommitAggregateCommand extends Command
         while (true) {
             $repositories = $this->client
                 ->api('organization')
-                ->repositories($this->configs['target_user'], 'all', $page);
+                ->repositories($this->configs['github']['target_user'], 'all', $page);
 
             if (!count($repositories)) {
                 break;
@@ -61,7 +61,7 @@ class GithubCommitAggregateCommand extends Command
         $users = [];
 
         foreach ($repositories as $repository) {
-            $commits = $this->client->api('repo')->commits()->all($this->configs['target_user'], $repository, array(
+            $commits = $this->client->api('repo')->commits()->all($this->configs['github']['target_user'], $repository, array(
                 'sha' => 'master',
                 'since' => $this->betweenDateTime->getStart()->format('c'),
                 'until' => $this->betweenDateTime->getEnd()->format('c')
@@ -73,7 +73,7 @@ class GithubCommitAggregateCommand extends Command
         }
 
         $teams = [];
-        foreach ($this->configs['teams'] as $teamName => $members) {
+        foreach ($this->configs['github']['teams'] as $teamName => $members) {
             $teams[$teamName] = 0;
             foreach ($users as $userName => $commitCount) {
                 if (in_array($userName, $members, true)) {
@@ -132,7 +132,7 @@ class GithubCommitAggregateCommand extends Command
 
         $this->client = new \Github\Client();
         $this->client->addCache(new RedisCachePool($redis));
-        $this->client->authenticate($this->configs['github_key'], null, \Github\Client::AUTH_HTTP_TOKEN);
+        $this->client->authenticate($this->configs['github']['key'], null, \Github\Client::AUTH_HTTP_TOKEN);
 
         $this->betweenDateTime = new BetweenDateTime();
     }

@@ -1,9 +1,10 @@
-github_key: ""
-target_user: "oz-sysb"
-teams:
-  team_name:
-    - user1
-    - user2
+github:
+  key: ""
+  target_user: "oz-sysb"
+  teams:
+    team_name:
+      - user1
+      - user2
 slack:
   webhook_url: https://hooks.slack.com/services/AAA/BBB/CCC
   username: bot
