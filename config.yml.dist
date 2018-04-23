@@ -10,3 +10,10 @@ slack:
   username: bot
   channel: "#engineers"
   link_names: true
+backlog:
+  space_id: ""
+  api_key: ""
+  teams:
+    team_name:
+      - 111 # member_id
+      - 222 # member_id

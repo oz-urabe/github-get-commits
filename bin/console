@@ -6,10 +6,12 @@ require __DIR__.'/../vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
 use OzVision\Command\GithubCommitAggregateCommand;
+use OzVision\Command\BacklogClosedAggregateCommand;
 
 $application = new Application();
 
 // ... register commands
 $application->add(new GithubCommitAggregateCommand());
+$application->add(new BacklogClosedAggregateCommand());
 
 $application->run();
