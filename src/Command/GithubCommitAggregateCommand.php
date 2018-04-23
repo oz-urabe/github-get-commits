@@ -57,7 +57,7 @@ class GithubCommitAggregateCommand extends Command
     {
         $start = new \DateTime(date('Y-m-d 00:00:00', strtotime('- 1 day - 1 month')));
         $end = new \DateTime(date('Y-m-d 23:59:59', strtotime('- 1 day')));
-        $count = [];
+        $users = [];
 
         foreach ($repositories as $repository) {
             $commits = $this->client->api('repo')->commits()->all($this->configs['target_user'], $repository, array(
@@ -67,11 +67,27 @@ class GithubCommitAggregateCommand extends Command
             ));
             foreach ($commits as $commit) {
                 $author = $commit['author']['login'];
-                $count[$author] = isset($count[$author]) ? $count[$author]+1 : 1;
+                $users[$author] = isset($users[$author]) ? $users[$author]+1 : 1;
             }
         }
 
-        return $count;
+        $teams = [];
+        foreach ($this->configs['teams'] as $teamName => $members) {
+            $teams[$teamName] = 0;
+            foreach ($users as $userName => $commitCount) {
+                if (in_array($userName, $members, true)) {
+                    $teams[$teamName] = $commitCount;
+                    unset($users[$userName]);
+                }
+            }
+        }
+
+        $teams['other'] = 0;
+        foreach ($users as $commitCount) {
+            $teams['other'] = $commitCount;
+        }
+
+        return $teams;
     }
 
     private function prepare()

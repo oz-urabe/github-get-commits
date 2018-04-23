@@ -1,2 +1,6 @@
 github_key: ""
 target_user: "oz-sysb"
+teams:
+  team_name:
+    - user1
+    - user2
