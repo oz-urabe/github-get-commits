@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "efe2446a00902b50a3a0655ccd60ede7",
+    "content-hash": "000ec9b193ab853ef975a1ff0403ff7a",
     "packages": [
         {
             "name": "cache/adapter-common",
@@ -488,6 +488,48 @@
                 "url"
             ],
             "time": "2017-03-20T17:10:46+00:00"
+        },
+        {
+            "name": "itigoppo/backlog-api",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/itigoppo/backlog-api.git",
+                "reference": "39601bcc703fbe97b45b57942b62568d7181bcd0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/itigoppo/backlog-api/zipball/39601bcc703fbe97b45b57942b62568d7181bcd0",
+                "reference": "39601bcc703fbe97b45b57942b62568d7181bcd0",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^6.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^5.7",
+                "satooshi/php-coveralls": "^1.0",
+                "squizlabs/php_codesniffer": "^3.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Itigoppo\\BacklogApi\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "itigoppo",
+                    "email": "itigoppo+github@gmail.com",
+                    "homepage": "http://twitter.com/itigoppo"
+                }
+            ],
+            "description": "Backlog API Library for PHP",
+            "time": "2017-11-20T08:40:39+00:00"
         },
         {
             "name": "knplabs/github-api",
